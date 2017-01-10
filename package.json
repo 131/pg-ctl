@@ -5,7 +5,7 @@
   "dependencies": {
     "nyks": "^3.9.1",
     "pg-co": "^1.9.8",
-    "pg-server-9.5-win-x86": "^1.0.1"
+    "pg-server-9.5-win-x86": "^1.0.2"
   },
   "main": "index.js",
   "scripts": {

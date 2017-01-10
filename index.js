@@ -14,13 +14,14 @@ const passthru = promisify(require('nyks/child_process/passthru'));
 
 
 
+
 class Server {
 
   constructor(config) {
     this.config = JSON.parse(fs.readFileSync(config));
   }
 
-  * run() {
+  * connect_or_start_server() {
 
     var lnk = new pg(this.config.admin);
 
@@ -58,6 +59,18 @@ class Server {
         } catch(err) { yield sleep(1500); }
       }
     }
+    lnk.close();
+
+    yield this.init_database();
+  }
+
+
+  * init_database() {
+    var lnk = new pg(this.config.admin);
+      //forget this and you'll crash your main loop
+    lnk.on('error', function(err) {
+      console.log("FAILURE IN sql client link");
+    });
 
     //now that the server is ready, check for ivscsac database
     var databases = yield lnk.col("pg_database", true, "datname");
@@ -80,6 +93,40 @@ class Server {
 
     lnk.close();
   }
+
+    //database already exists, we just need to check the current schema
+  * update_database() {
+    if(this.config.dbschema.type == "clyks")
+      yield passthru(which("clyks"), [this.config.dbschema.site,  "sql", "--ir://run=update_database"]);
+  }
+
+
+  * dropdb(name) {
+    try {
+      var lnk = new pg(this.config.admin);
+        //kick all previous user
+      yield lnk.select("pg_stat_activity", {datname : archive_database_name}, "pg_terminate_backend(pid)");
+      yield lnk.query(`DROP DATABASE IF EXISTS "${name}" `);
+
+    } finally {
+      lnk.close();
+    }
+  }
+
+  * rotate_db(current_database_name, archive_database_name) {
+    // Move and recreate database
+    yield this.dropdb(archive_database_name);
+
+    try {
+      var lnk = new pg(this.config.admin);
+      yield lnk.query(`ALTER DATABASE "${current_database_name}" RENAME TO "${archive_database_name}" `);
+    } finally {
+     lnk.close();
+    }
+
+    yield this.init_database();
+  }
+
 
   * populate() {
     try {
