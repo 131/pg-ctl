@@ -11,7 +11,7 @@ const promisify = require('nyks/function/promisify');
 const which = require('nyks/path/which');
 
 const passthru = promisify(require('nyks/child_process/passthru'));
-
+const sprintf = require('nyks/string/format');
 
 
 
@@ -77,9 +77,9 @@ class Server {
     var users     = yield lnk.col("pg_user", true, "usename");
 
 
-    if(users.indexOf(this.config.dbuser) == -1) {
-      console.log("Should create user '%s'", this.config.dbuser);
-      yield lnk.query(`CREATE USER "${this.config.dbuser}";`);  //WITH PASSWORD \'%s\''
+    if(users.indexOf(this.config.user) == -1) {
+      console.log("Should create user '%s'", this.config.user);
+      yield lnk.query(`CREATE USER "${this.config.user}" ${sprintf(this.config.password ? "WITH PASSWORD '%s'" : '', this.config.password)};`);
     }
 
 
