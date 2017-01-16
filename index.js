@@ -4,9 +4,7 @@ const fs      = require('fs');
 const path    = require('path');
 const defer   = require('nyks/promise/defer');
 const sleep   = require('nyks/function/sleep');
-
-const server = require('pg-server-9.5-win-x86');
-const pg     = require('pg-co');
+const pg      = require('pg-co');
 const promisify = require('nyks/function/promisify');
 const which = require('nyks/path/which');
 
@@ -36,6 +34,7 @@ class Server {
       console.log("Connected to an existing pg server instance");
     } catch(err) {
       let defered = defer();
+      let server = require('pg-server-9.5-win-x86');
 
       server(this.config.admin.dataDir, defered.chain);
       var instance = yield defered;
