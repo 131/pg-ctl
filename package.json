@@ -1,6 +1,6 @@
 {
   "name": "pg-ctl",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "description": "",
   "dependencies": {
     "nyks": "^3.9.1",
