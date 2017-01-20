@@ -100,12 +100,12 @@ class Server {
   }
 
 
-  * dropdb(name) {
+  * dropdb(datname) {
     try {
       var lnk = new pg(this.config.admin);
         //kick all previous user
-      yield lnk.select("pg_stat_activity", {datname : archive_database_name}, "pg_terminate_backend(pid)");
-      yield lnk.query(`DROP DATABASE IF EXISTS "${name}" `);
+      yield lnk.select("pg_stat_activity", {datname}, "pg_terminate_backend(pid)");
+      yield lnk.query(`DROP DATABASE IF EXISTS "${datname}" `);
 
     } finally {
       lnk.close();
