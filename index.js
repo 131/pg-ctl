@@ -25,7 +25,7 @@ class Server {
 
       //forget this and you'll crash your main loop
     lnk.on('error', function(err) {
-      console.log("FAILURE IN sql client link");
+      console.log("FAILURE IN sql client link", err);
     });
 
       //maybe the server is already running (!)
@@ -47,8 +47,9 @@ class Server {
       console.log("Server is running, trying to connect");
       var tries = 5;
 
-
+      yield sleep(1500);
       while(true) {
+
         if(!tries --)
           throw "Could not connect";
 
@@ -60,6 +61,7 @@ class Server {
     }
     lnk.close();
 
+    console.log("Server is up & running, checking main database");
     yield this.init_database();
   }
 
