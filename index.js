@@ -84,7 +84,7 @@ class Server {
       yield lnk.query(`CREATE USER "${this.config.user}" ${sprintf(this.config.password ? "WITH PASSWORD '%s'" : '', this.config.password)};`);
     }
 
-    var create = databases.indexOf(this.config.database) != -1;
+    var create = databases.indexOf(this.config.database) == -1;
 
     if(create) {
       console.log("Should create database '%s'", this.config.database);
