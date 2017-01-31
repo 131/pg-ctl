@@ -66,6 +66,7 @@ class Server {
   }
 
 
+    //return true if database has been created, false if already existing
   * init_database() {
     var lnk = new pg(this.config.admin);
       //forget this and you'll crash your main loop
@@ -83,8 +84,9 @@ class Server {
       yield lnk.query(`CREATE USER "${this.config.user}" ${sprintf(this.config.password ? "WITH PASSWORD '%s'" : '', this.config.password)};`);
     }
 
+    var create = databases.indexOf(this.config.database) != -1;
 
-    if(databases.indexOf(this.config.database) == -1) {
+    if(create) {
       console.log("Should create database '%s'", this.config.database);
       yield lnk.query(`CREATE DATABASE "${this.config.database}" ENCODING 'utf8';`);
 
@@ -93,6 +95,7 @@ class Server {
     }
 
     lnk.close();
+    return create;
   }
 
     //database already exists, we just need to check the current schema
