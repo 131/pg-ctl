@@ -84,9 +84,9 @@ class Server {
     }
 
 
-    if(databases.indexOf(this.config.dbname) == -1) {
-      console.log("Should create database '%s'", this.config.dbname);
-      yield lnk.query(`CREATE DATABASE "${this.config.dbname}" ENCODING 'utf8';`);
+    if(databases.indexOf(this.config.database) == -1) {
+      console.log("Should create database '%s'", this.config.database);
+      yield lnk.query(`CREATE DATABASE "${this.config.database}" ENCODING 'utf8';`);
 
       if(this.config.dbschema.type == "clyks")
         yield passthru(which("clyks"), [this.config.dbschema.site,  "sql", "--ir://run=init_database"]);
@@ -133,7 +133,7 @@ class Server {
     try {
       var psql_path = path.resolve(__dirname, "node_modules/pg-server-9.5-win-x86/server/bin/psql.exe");
       var mock_data = './test/mock/ta.sql';
-      yield passthru(psql_path, ["-U", "postgres",  "-f", mock_data, this.config.dbname])
+      yield passthru(psql_path, ["-U", "postgres",  "-f", mock_data, this.config.database])
     } catch(err) {
       console.error("Could not populate db with mock data", err);
     }
