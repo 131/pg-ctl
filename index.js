@@ -132,10 +132,9 @@ class Server {
   }
 
 
-  * populate() {
+  * populate(mock_data) {
     try {
       var psql_path = path.resolve(__dirname, "node_modules/pg-server-9.5-win-x86/server/bin/psql.exe");
-      var mock_data = './test/mock/ta.sql';
       yield passthru(psql_path, ["-U", "postgres",  "-f", mock_data, this.config.database])
     } catch(err) {
       console.error("Could not populate db with mock data", err);
