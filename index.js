@@ -4,13 +4,17 @@ const fs      = require('fs');
 const path    = require('path');
 const defer   = require('nyks/promise/defer');
 const sleep   = require('nyks/function/sleep');
+const strftime   = require('mout/date/strftime');
 const pg      = require('pg-co');
 const promisify = require('nyks/function/promisify');
-const which = require('nyks/path/which');
-
-const passthru = promisify(require('nyks/child_process/passthru'));
+const which     = require('nyks/path/which');
+const spawn    = require('child_process').spawn;
+const passthru  = promisify(require('nyks/child_process/passthru'));
 const sprintf = require('nyks/string/format');
 
+
+if(process.platform == 'win32')
+  require('nyks/path/extend')(path.resolve(__dirname, 'node_modules/pg-server-9.5-win-x86/server/bin'));
 
 
 class Server {
@@ -25,13 +29,13 @@ class Server {
 
       //forget this and you'll crash your main loop
     lnk.on('error', function(err) {
-      console.log("FAILURE IN sql client link", err);
+      console.error("FAILURE IN sql client link", err);
     });
 
       //maybe the server is already running (!)
     try {
       yield  lnk.connect();
-      console.log("Connected to an existing pg server instance");
+      console.error("Connected to an existing pg server instance");
     } catch(err) {
       let defered = defer();
       let server = require('pg-server-9.5-win-x86');
@@ -44,7 +48,7 @@ class Server {
 
       this.instance = instance;
 
-      console.log("Server is running, trying to connect");
+      console.error("Server is running, trying to connect");
       var tries = 5;
 
       yield sleep(1500);
@@ -61,7 +65,7 @@ class Server {
     }
     lnk.close();
 
-    console.log("Server is up & running, checking main database");
+    console.error("Server is up & running, checking main database");
     yield this.init_database();
   }
 
@@ -71,7 +75,7 @@ class Server {
     var lnk = new pg(this.config.admin);
       //forget this and you'll crash your main loop
     lnk.on('error', function(err) {
-      console.log("FAILURE IN sql client link");
+      console.error("FAILURE IN sql client link");
     });
 
     //now that the server is ready, check for ivscsac database
@@ -80,18 +84,18 @@ class Server {
 
 
     if(users.indexOf(this.config.user) == -1) {
-      console.log("Should create user '%s'", this.config.user);
+      console.error("Should create user '%s'", this.config.user);
       yield lnk.query(`CREATE USER "${this.config.user}" ${sprintf(this.config.password ? "WITH PASSWORD '%s'" : '', this.config.password)};`);
     }
 
     var create = databases.indexOf(this.config.database) == -1;
 
     if(create) {
-      console.log("Should create database '%s'", this.config.database);
+      console.error("Should create database '%s'", this.config.database);
       yield lnk.query(`CREATE DATABASE "${this.config.database}" ENCODING 'utf8';`);
 
-      if(this.config.dbschema.type == "clyks")
-        yield passthru(which("clyks"), [this.config.dbschema.site,  "sql", "--ir://run=init_database"]);
+      if(this.config.dbschema.type == 'clyks')
+        yield passthru(which('clyks'), [this.config.dbschema.site,  "sql", "--ir://run=init_database"]);
     }
 
     lnk.close();
@@ -100,10 +104,29 @@ class Server {
 
     //database already exists, we just need to check the current schema
   * update_database() {
-    if(this.config.dbschema.type == "clyks")
-      yield passthru(which("clyks"), [this.config.dbschema.site,  "sql", "--ir://run=update_database"]);
+    if(this.config.dbschema.type == 'clyks')
+      yield passthru(which('clyks'), [this.config.dbschema.site,  "sql", "--ir://run=update_database"]);
   }
 
+
+
+  * dumpdb(datname, outfile) /**
+  * @param {string} [datname=]
+  * @param {string} [outfile=-]
+  */{
+    try {
+      outfile = strftime(new Date(), outfile);
+      datname = datname || this.config.database;
+      var target = outfile == "-" ? process.stdout :  fs.createWriteStream(outfile);
+      var defered = defer();
+      var child = spawn(which('pg_dump'), ['-h', this.config.admin.host,  "-U", this.config.admin.user, datname] , {stdio : ['inherit', 'pipe', 'inherit']}, defered.chain);
+      child.stdout.pipe(target);
+      console.error("Dumped '%s' to '%s', have a nice day", datname, outfile);
+    } catch(err) {
+      console.error("Could backup database", err);
+    }
+
+  }
 
   * dropdb(datname) {
     try {
@@ -134,8 +157,8 @@ class Server {
 
   * populate(mock_data) {
     try {
-      var psql_path = path.resolve(__dirname, "node_modules/pg-server-9.5-win-x86/server/bin/psql.exe");
-      yield passthru(psql_path, ["-U", "postgres",  "-f", mock_data, this.config.database])
+      yield passthru(which('psql'), ["-U", "postgres",  "-f", mock_data, this.config.database])
+
     } catch(err) {
       console.error("Could not populate db with mock data", err);
     }
@@ -144,7 +167,7 @@ class Server {
   stop() {
     if(this.instance) {
       this.instance.softkill();
-      console.log("Server killed, bye");
+      console.error("Server killed, bye");
     }
 
     setTimeout(function(){
