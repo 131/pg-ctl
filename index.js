@@ -65,13 +65,19 @@ class Server {
     }
     lnk.close();
 
-    console.error("Server is up & running, checking main database");
+    console.error("Server is up & running");
+
+    if (!this.config.database)
+      return;
+
     yield this.init_database();
   }
 
 
     //return true if database has been created, false if already existing
   * init_database() {
+    console.log('Checking main database');
+
     var lnk = new pg(this.config.admin);
       //forget this and you'll crash your main loop
     lnk.on('error', function(err) {
