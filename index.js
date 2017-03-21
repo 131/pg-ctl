@@ -104,7 +104,7 @@ class Server {
         yield passthru(which('clyks'), [this.config.dbschema.site,  "sql", "--ir://run=init_database"]);
 
       if(this.config.dbschema.type == 'rawsql')
-        yield this.populate(this.config.dbschema.path);
+        yield this.rawsql(this.config.dbschema.path, this.config.admin);
 
     }
 
@@ -165,7 +165,22 @@ class Server {
   }
 
 
-  * populate(mock_data) {
+  * rawsql(mock_data, config) /**
+  * @alias populate
+  * @param object [config=]
+  */ {
+
+    try {
+      var lnk = new pg(config || this.config);
+        //kick all previous user
+      var contents = fs.readFileSync(mock_data, 'utf-8');
+      yield lnk.query(contents);
+    } finally {
+      lnk.close();
+    } catch(err) {
+      console.error("Could not populate db with mock data", err);
+    }
+/*  //works well, yet, not in docker (psql binary is unavailable)
     try {
       var args =  ["-U", "postgres",  "-f", mock_data, this.config.database],
            psql_bin = which('psql');
@@ -174,7 +189,9 @@ class Server {
     } catch(err) {
       console.error("Could not populate db with mock data", psql_bin, args, err);
     }
+*/
   }
+
 
   stop() {
     if(this.instance) {
