@@ -102,6 +102,10 @@ class Server {
 
       if(this.config.dbschema.type == 'clyks')
         yield passthru(which('clyks'), [this.config.dbschema.site,  "sql", "--ir://run=init_database"]);
+
+      if(this.config.dbschema.type == 'rawsql')
+        yield this.populate(this.config.dbschema.path);
+
     }
 
     lnk.close();
@@ -163,10 +167,12 @@ class Server {
 
   * populate(mock_data) {
     try {
-      yield passthru(which('psql'), ["-U", "postgres",  "-f", mock_data, this.config.database])
+      var args =  ["-U", "postgres",  "-f", mock_data, this.config.database],
+           psql_bin = which('psql');
+      yield passthru(psql_bin, args)
 
     } catch(err) {
-      console.error("Could not populate db with mock data", err);
+      console.error("Could not populate db with mock data", psql_bin, args, err);
     }
   }
 
