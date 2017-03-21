@@ -172,6 +172,7 @@ class Server {
 
     try {
       config = config || this.config;
+      config.database = this.config.database;
       var querymode = this.config.querymode || "psql";
       console.log("Working with raw file in query mode '%s'", querymode);
       if(querymode == "psql") {
