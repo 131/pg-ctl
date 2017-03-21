@@ -171,20 +171,30 @@ class Server {
   */ {
 
     try {
-      var lnk = new pg(config || this.config);
-        //kick all previous user
-      var contents = fs.readFileSync(mock_data, 'utf-8');
-      yield lnk.query(contents);
-    } finally {
-      lnk.close();
+      config = config || this.config;
+      var querymode = this.config.querymode || "psql";
+      console.log("Working with raw file in query mode '%s'", querymode);
+      if(querymode == "psql") {
+        var args =  ["-U", config.user, "-h", config.host, "-f", mock_data, config.database],
+             psql_bin = which('psql');
+        yield passthru(psql_bin, args)
+      } else {
+        try {
+          var lnk = new pg(config);
+            //kick all previous user
+          var contents = fs.readFileSync(mock_data, 'utf-8');
+          yield lnk.query(contents);
+        } finally {
+          lnk.close();
+        }
+      }
     } catch(err) {
       console.error("Could not populate db with mock data", err);
     }
+
 /*  //works well, yet, not in docker (psql binary is unavailable)
     try {
-      var args =  ["-U", "postgres",  "-f", mock_data, this.config.database],
-           psql_bin = which('psql');
-      yield passthru(psql_bin, args)
+
 
     } catch(err) {
       console.error("Could not populate db with mock data", psql_bin, args, err);
