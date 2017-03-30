@@ -156,6 +156,8 @@ class Server {
 
     try {
       var lnk = new pg(this.config.admin);
+
+      yield lnk.select("pg_stat_activity", {datname : current_database_name}, "pg_terminate_backend(pid)");
       yield lnk.query(`ALTER DATABASE "${current_database_name}" RENAME TO "${archive_database_name}" `);
     } finally {
      lnk.close();
