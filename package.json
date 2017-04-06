@@ -1,6 +1,6 @@
 {
   "name": "pg-ctl",
-  "version": "1.5.4",
+  "version": "1.5.5",
   "description": "",
   "dependencies": {
     "debug": "^2.3.2",
