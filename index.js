@@ -2,20 +2,22 @@
 
 const fs      = require('fs');
 const path    = require('path');
-const defer   = require('nyks/promise/defer');
-const sleep   = require('nyks/function/sleep');
-const strftime   = require('mout/date/strftime');
 const pg      = require('pg-co');
+const debug   = require('debug');
+
+const spawn   = require('child_process').spawn;
+
+const strftime  = require('mout/date/strftime');
+const defer     = require('nyks/promise/defer');
+const sleep     = require('nyks/function/sleep');
 const promisify = require('nyks/function/promisify');
 const which     = require('nyks/path/which');
-const spawn    = require('child_process').spawn;
+const wait      = require('nyks/child_process/wait');
+const sprintf   = require('nyks/string/format');
 const passthru  = promisify(require('nyks/child_process/passthru'));
-const sprintf = require('nyks/string/format');
-
 
 if(process.platform == 'win32')
   require('nyks/path/extend')(path.resolve(__dirname, 'node_modules/pg-server-9.5-win-x86/server/bin'));
-
 
 class Server {
 
@@ -100,8 +102,14 @@ class Server {
       console.error("Should create database '%s'", this.config.database);
       yield lnk.query(`CREATE DATABASE "${this.config.database}" ENCODING 'utf8';`);
 
-      if(this.config.dbschema.type == 'clyks')
-        yield passthru(which('clyks'), [this.config.dbschema.site,  "sql", "--ir://run=init_database"]);
+      if(this.config.dbschema.type == 'clyks') {
+        var stdio = ['inherit', 'ignore', 'ignore'];
+        if(debug.enabled('myks'))
+          stdio = ['inherit', 'inherit', 'inherit'];
+
+        var child = spawn(which('clyks'), [this.config.dbschema.site,  "sql", "--ir://run=init_database"], {stdio});
+        yield wait(child);
+      }
 
       if(this.config.dbschema.type == 'rawsql')
         yield this.rawsql(this.config.dbschema.path, this.config.admin);
@@ -180,7 +188,13 @@ class Server {
       if(querymode == "psql") {
         var args =  ["-U", config.user, "-h", config.host, "-f", mock_data, config.database],
              psql_bin = which('psql');
-        yield passthru(psql_bin, args)
+
+        var stdio = ['inherit', 'ignore', 'ignore'];
+        if(debug.enabled('myks'))
+          stdio = ['inherit', 'inherit', 'inherit'];
+
+        var child = spawn(psql_bin, args, {stdio});
+        yield wait(child);
       } else {
         try {
           var lnk = new pg(config);
@@ -218,6 +232,5 @@ class Server {
   }
 
 }
-
 
 module.exports = Server;
