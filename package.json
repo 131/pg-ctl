@@ -6,7 +6,7 @@
     "debug": "^2.3.2",
     "mout": "^1.0.0",
     "nyks": "^4.1.10",
-    "pg-aa": "^2.0.2"
+    "pg-aa": "^2.0.5"
   },
   "optionalDependencies": {
     "pg-server-9.5-win-x86": "^1.0.3"
