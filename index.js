@@ -1,7 +1,6 @@
 "use strict";
 
 const fs      = require('fs');
-const path    = require('path');
 const Pg      = require('pg-aa');
 const debug   = require('debug');
 
@@ -11,15 +10,13 @@ const strftime  = require('mout/date/strftime');
 const get       = require('mout/object/get');
 
 const defer     = require('nyks/promise/defer');
-const sleep     = require('nyks/async/sleep');
 const promisify = require('nyks/function/promisify');
 const which     = require('nyks/path/which');
 const wait      = require('nyks/child_process/wait');
 const sprintf   = require('nyks/string/format');
 const passthru  = promisify(require('nyks/child_process/passthru'));
 
-if(process.platform == 'win32')
-  require('nyks/path/extend')(path.resolve(__dirname, 'node_modules/pg-server-9.5-win-x86/server/bin'));
+
 
 class Server {
 
@@ -36,42 +33,13 @@ class Server {
       console.error("FAILURE IN sql client link", err);
     });
 
-    //maybe the server is already running (!)
-    try {
-      await  lnk.connect();
-      console.error("Connected to an existing pg server instance");
-    } catch(err) {
-      let defered = defer();
-      let server = require('pg-server-9.5-win-x86');
-
-      server(this.config.admin.dataDir, defered.chain);
-      var instance = await defered;
-
-      instance.stderr.pipe(process.stderr);
-      instance.stdout.pipe(process.stdout);
-
-      this.instance = instance;
-
-      console.error("Server is running, trying to connect");
-      var tries = 5;
-
-      await sleep(1500);
-      while(true) {
-
-        if(!tries--)
-          throw "Could not connect";
-
-        try {
-          await  lnk.connect();
-          break;
-        } catch(err) { await sleep(1500); }
-      }
-    }
+    await  lnk.connect();
+    console.error("Connected to an existing pg server instance");
     lnk.close();
 
     console.error("Server is up & running");
 
-    if (!this.config.database)
+    if(!this.config.database)
       return;
 
     await this.init_database();
@@ -223,11 +191,6 @@ class Server {
 
 
   stop() {
-    if(this.instance) {
-      this.instance.softkill();
-      console.error("Server killed, bye");
-    }
-
     setTimeout(function() {
       process.exit();
     }, 1000);

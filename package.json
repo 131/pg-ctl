@@ -5,22 +5,17 @@
   "dependencies": {
     "debug": "^2.3.2",
     "mout": "^1.0.0",
-    "nyks": "^4.1.10",
-    "pg-aa": "^2.0.5"
-  },
-  "optionalDependencies": {
-    "pg-server-9.5-win-x86": "^1.0.3"
+    "nyks": "^5.10.1",
+    "pg-aa": "^2.1.2"
   },
   "main": "index.js",
   "scripts": {
-    "jscs": "jscs --config=node_modules/ivs-jssc/ivs-node.jscsrc index.js",
-    "eslint": "eslint --config=node_modules/ivs-jssc/ivs-node.eslintrc.js index.js",
-    "checkall": "npm run jscs && npm run eslint",
-    "test": "npm run checkall"
+    "eslint": "eslint index.js",
+    "test": "npm run eslint"
   },
   "author": "Francois Leurent <131.js@cloudyks.org>",
   "license": "ISC",
   "devDependencies": {
-    "ivs-jssc": "^2.1.2"
+    "eslint-plugin-ivs": "^2.1.0"
   }
 }
